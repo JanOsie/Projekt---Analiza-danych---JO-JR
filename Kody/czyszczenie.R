@@ -1,3 +1,4 @@
-#Tutaj będziemy pisać główny kod :D
+#pobranie danych z repozytorium
 
-dane <- samochody_new
+dane <- read.csv("dane_surowe/samochody_new.csv")
+View(dane)
