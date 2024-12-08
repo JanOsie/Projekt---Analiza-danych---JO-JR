@@ -1,0 +1,23 @@
+1.	Zmienić nazwy na polskie
+
+colnames(dane) <- c("marka", "model”, itd)
+
+2.	Dodać kolejne argumenty do sortowania
+
+dane <- dane %>% 
+  arrange(dane, brand, model, KOLEJNE)
+
+3.  Znaleźć pomieszane wiersze danych (unique?) i odpowiednio uporządkować
+
+30667 mercedes-benz Mercedes-Benz CLA 250 Sport 4-Matic 93900 Diesel      automatic 2019      42 000 km Warszawa          Mazowieckie 2 143 cm3
+30668 mercedes-benz Mercedes-Benz CLA 250 Sport 7G-DCT  74900 131 343 km  automatic 1 991 cm3 Benzyna   Tomaszów Lubelski Lubelskie   2014
+
+3.	Usunąć km albo cm3 tak aby były same cyfry
+
+4.	Zmienić typ danych na właściwy
+
+5.	Dodać factor do odpowiednich kolumn
+
+6.  Dodać kolumnę na szersze zgrupowanie modelu?
+
+7.  Zająć się z NA
