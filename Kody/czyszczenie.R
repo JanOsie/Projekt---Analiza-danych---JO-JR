@@ -56,6 +56,7 @@ dane_ferrari <- dane %>%
   filter(marka == "ferrari")
 
 #braki danych są rozrzucone dla ferrari i nie wykazują jakiejś zależności
+
 ggplot(data = dane_ferrari, aes(x = rok, y = cena_zl)) +
   geom_point() +
   geom_miss_point() +
@@ -67,3 +68,15 @@ ggplot(data = dane_ferrari, aes(x = rok, y = cena_zl)) +
 ggplot(data = dane, aes(x = rok, y = cena_zl)) +
   geom_point(aes(color = marka, shape = marka), size = 2) +
   theme_minimal()
+
+# sprawdzam czy dane są wymieszane 
+
+unique(dane$skrzynia_biegow)
+unique(dane$paliwo)
+
+# ile obserwacji mają złą wartość w kolumnie paliwo (piwo to Janka paliwo)
+
+spr <- !grepl("km",dane$paliwo)
+sum(spr)
+
+
