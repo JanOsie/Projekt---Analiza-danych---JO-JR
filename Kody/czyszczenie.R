@@ -76,7 +76,21 @@ unique(dane$paliwo)
 
 # ile obserwacji mają złą wartość w kolumnie paliwo (piwo to Janka paliwo)
 
-spr <- !grepl("km",dane$paliwo)
+spr <- !grepl("km",dane$przebieg_w_milach)
 sum(spr)
 
+# usuwam km i spację w kolumnie przebieg w milach 
 
+dane$przebieg_w_milach2 <- gsub('km', '', dane$przebieg_w_milach)
+
+dane$przebieg_w_milach2 <- trimws(dane$przebieg_w_milach)
+
+dane$przebieg_w_milach2 <- gsub(' ', '', dane$przebieg_w_milach)
+
+dane$przebieg_w_milach2 <- gsub('km', '', dane$przebieg_w_milach2)
+
+dane$przebieg_w_milach2 <- as.numeric(dane$przebieg_w_milach2)
+
+n_miss(dane$przebieg_w_milach)
+
+n_miss(dane$przebieg_w_milach2)
