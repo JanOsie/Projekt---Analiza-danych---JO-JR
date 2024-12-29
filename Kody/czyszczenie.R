@@ -342,3 +342,303 @@ unique(dane9$rok)
 # ZMIENNA ROK ZOSTAŁA OCZYSZCZONA
 ########################################################################
 
+
+
+
+# sprawdzam co jest w kol skrzynia biegów poza prawidłowymi wartościami
+
+unique(dane9$skrzynia_biegow)
+
+braki_w_skrzyni_biegow <- dane9 %>%
+  filter(!c(skrzynia_biegow %in% c("manual", "automatic")))
+
+View(braki_w_skrzyni_biegow)
+
+# wszytskie wartości zostały dobrze wpisane w kolumnie skrzynia_biegow i brak wartości NA
+
+
+
+
+
+########################################################################
+# ZMIENNA SKRZYNIA_BIEGÓW JEST CZYSTA
+########################################################################
+
+
+
+
+########################## TEST NA PODZBIORZE ##########################
+
+# sprawdzenie co jest w przebiegu poza przebiegiem
+
+przebieg_błędnie <- dane9[!grepl("km", dane9$przebieg_w_milach), ]
+View(przebieg_błędnie)
+
+# przepisanie wartości poj_silnika z kol przebieg do poj_silnika gdy w tej kolumnie nie ma już czego z "cm3" lub "km" (4 obs z rokiem w poj_sil zamieniam na NA)
+# jeśli nie ma km w przebiegu oraz km i cm3 w silniku
+przebieg_błędnie2 <- przebieg_błędnie
+
+for (i in 1:nrow(przebieg_błędnie2)) {
+  if (!grepl("km", przebieg_błędnie2$przebieg_w_milach[i])) {
+    if (!grepl("cm3", przebieg_błędnie2$poj_silnika[i])) {
+      if (!grepl("km", przebieg_błędnie2$poj_silnika[i])) {
+        przebieg_błędnie2$poj_silnika[i] <- przebieg_błędnie2$przebieg_w_milach[i]
+        przebieg_błędnie2$przebieg_w_milach[i] <- NA
+      }
+    }
+  }
+}
+
+View(przebieg_błędnie2)
+
+# dodatkowo usuwam poj_silnika gdy to już jest wpisane w kol poj_silnika
+
+przebieg_błędnie3 <- przebieg_błędnie2
+
+for (i in 1:nrow(przebieg_błędnie3)) {
+  if (grepl("cm3", przebieg_błędnie3$przebieg_w_milach[i])) {
+    if (grepl("cm3", przebieg_błędnie3$poj_silnika[i])) {
+      przebieg_błędnie3$przebieg_w_milach[i] <- NA
+    }
+  }
+}
+
+View(przebieg_błędnie3)
+
+###################### OCZYSZCZANIE W CAŁEJ TABELI ######################
+
+# przepisanie cm3 do poj_sil gdy tam nie ma
+dane10 <- dane9
+
+for (i in 1:nrow(dane10)) {
+  if (!grepl("km", dane10$przebieg_w_milach[i])) {
+    if (!grepl("cm3", dane10$poj_silnika[i])) {
+      if (!grepl("km", dane10$poj_silnika[i])) {
+        dane10$poj_silnika[i] <- dane10$przebieg_w_milach[i]
+        dane10$przebieg_w_milach[i] <- NA
+      }
+    }
+  }
+}
+
+# dodatkowo usuwam poj_silnika gdy to już jest wpisane w kol poj_silnika
+dane11 <- dane10
+
+for (i in 1:nrow(dane10)) {
+  if (grepl("cm3", dane10$przebieg_w_milach[i])) {
+    if (grepl("cm3", dane10$poj_silnika[i])) {
+      dane10$przebieg_w_milach[i] <- NA
+    }
+  }
+}
+
+# sprawdzam czy się powiodło, co poza "km" zostało
+unique(dane11$przebieg_w_milach)
+
+cm3_w_przebiegu3 <- dane11[!grepl("km", dane11$przebieg_w_milach), ]
+view(cm3_w_przebiegu3)
+
+# zostały pojedyńcze lata i paliwa, które usuwam (bo mają już swoje wartości w swoich kol)
+
+dane12 <- dane11
+
+for (i in 1:nrow(dane12)) {
+  if (!grepl("km", dane12$przebieg_w_milach[i])) {
+    dane12$przebieg_w_milach[i] <- NA
+  }
+}
+
+
+# sprawdzam co zostało poza km i NA
+
+cm3_w_przebiegu4 <- dane12 %>% 
+  filter(!is.na(dane12$przebieg_w_milach))
+
+view(cm3_w_przebiegu4[!grepl("km", cm3_w_przebiegu4$przebieg_w_milach), ])
+# pusta tabela
+
+View(dane12)
+
+
+
+
+########################################################################
+# ZMIENNA PRZEBIEG_W_MILACH JEST CZYSTA
+########################################################################
+
+
+
+
+
+# sprawdzam co znajduje się w kol marka
+
+dane13 <- dane12
+
+unique(dane13$marka)
+
+# ile jest NA w kol marka (1100 obs)
+
+marka_NA <- filter(dane13, is.na(marka))
+
+View(marka_NA)
+
+# sprawdzam ile jest obs gdzie marki i modelu nie ma (0 obs)
+
+View(filter(dane13, is.na(marka) & is.na(model)))
+
+# dla sprawniejszej zmiany zmieniam wszytskie nazwy marek i modeli aby były z małej litery
+
+dane13$marka <- tolower(dane13$marka)
+dane13$model <- tolower(dane13$model)
+
+View(dane13)
+
+########################## TEST NA PODZBIORZE ##########################
+
+# dodawanie pierwszego słowa z kol model do kol marki jeśli w kol marka jest NA
+
+marka_NA2 <- marka_NA
+
+for (i in 1:nrow(marka_NA2)) {
+  if (is.na(marka_NA2$marka[i])) {
+    marka_NA2$marka[i] <- word(marka_NA2$model[i], 1) 
+  }
+}
+
+View(marka_NA2)
+
+unique(marka_NA2$marka)
+
+###################### OCZYSZCZANIE W CAŁEJ TABELI ######################
+
+dane14 <- dane13
+
+for (i in 1:nrow(dane14)) {
+  if (is.na(dane14$marka[i])) {
+    dane14$marka[i] <- word(dane14$model[i], 1) 
+  }
+}
+
+unique(dane14$marka)
+
+# alfa romeo, citroen i land rover są zapisane na dwa sposoby, ujednolicam je
+
+dane15 <- dane14
+
+for (i in 1:nrow(dane15)) {
+  if (grepl("alfa", dane15$marka[i])) {
+    dane15$marka[i] <- "alfa-romeo"
+  }
+  if (grepl("citroën", dane15$marka[i])) {
+    dane15$marka[i] <- "citroen"
+  }
+  if (grepl("land", dane15$marka[i])) {
+    dane15$marka[i] <- "land-rover"
+  }
+}
+
+# porównuje przed i po (zniknęło tylko NA)
+
+unique(dane12$marka)
+unique(dane15$marka)
+
+
+
+########################################################################
+# ZMIENNA MARKA JEST CZYSTA
+########################################################################
+
+glimpse(dane15)
+
+unique(dane15$marka)
+View(dane15[!grepl("km", dane15$przebieg_w_milach) & !is.na(dane15$przebieg_w_milach), ])
+unique(dane15$skrzynia_biegow)
+unique(dane15$paliwo)
+unique(dane15$rok)
+View(dane15[!grepl("cm3", dane15$poj_silnika) & !is.na(dane15$poj_silnika), ])
+
+# trzeba jeszcze doczyścić poj_silnika z przebiegu i roku (809 obs)
+
+brudy_w_poj_silnika <- dane15[!grepl("cm3", dane15$poj_silnika) & !is.na(dane15$poj_silnika), ]
+View(brudy_w_poj_silnika)
+
+########################## TEST NA PODZBIORZE ##########################
+
+brudy_w_poj_silnika2 <- brudy_w_poj_silnika
+
+for (i in 1:nrow(brudy_w_poj_silnika2)) {
+  # przenieść km do przebiegu, poźniej usunąć
+  if (grepl("km", brudy_w_poj_silnika2$poj_silnika[i]) & is.na(brudy_w_poj_silnika2$przebieg_w_milach[i])) {
+    brudy_w_poj_silnika2$przebieg_w_milach[i] <- brudy_w_poj_silnika2$poj_silnika[i]
+    brudy_w_poj_silnika2$poj_silnika[i] <- NA
+  } 
+  # przenieść rok do kol rok, później usunąć
+  if (brudy_w_poj_silnika2$poj_silnika[i] %in% rok_prawidłowe & is.na(brudy_w_poj_silnika2$rok[i])) {
+    brudy_w_poj_silnika2$rok[i] <- brudy_w_poj_silnika2$poj_silnika[i]
+    brudy_w_poj_silnika2$poj_silnika[i] <- NA
+  }
+  # jeśli rok już jest to usunąć rok gdy jest w kol poj_silnika
+  if (brudy_w_poj_silnika2$poj_silnika[i] %in% rok_prawidłowe & !is.na(brudy_w_poj_silnika2$rok[i])) {
+    brudy_w_poj_silnika2$poj_silnika[i] <- NA
+  }
+  if (brudy_w_poj_silnika2$poj_silnika[i] %in% paliwo_prawidlowe) {
+    if (is.na(brudy_w_poj_silnika2$paliwo[i])) {
+      brudy_w_poj_silnika2$paliwo[i] <- brudy_w_poj_silnika2$poj_silnika[i]
+      brudy_w_poj_silnika2$poj_silnika[i] <- NA
+    }
+    if (brudy_w_poj_silnika2$paliwo[i] %in% paliwo_prawidlowe) {
+      brudy_w_poj_silnika2$poj_silnika[i] <- NA
+    }
+  }
+}
+
+View(brudy_w_poj_silnika2)
+
+###################### OCZYSZCZANIE W CAŁEJ TABELI ######################
+
+dane16 <- dane15
+
+for (i in 1:nrow(dane16)) {
+  # przenieść km do przebiegu, poźniej usunąć
+  if (grepl("km", dane16$poj_silnika[i]) & is.na(dane16$przebieg_w_milach[i])) {
+    dane16$przebieg_w_milach[i] <- dane16$poj_silnika[i]
+    dane16$poj_silnika[i] <- NA
+  } 
+  # przenieść rok do kol rok, później usunąć
+  if (dane16$poj_silnika[i] %in% rok_prawidłowe & is.na(dane16$rok[i])) {
+    dane16$rok[i] <- dane16$poj_silnika[i]
+    dane16$poj_silnika[i] <- NA
+  }
+  # jeśli rok już jest to usunąć rok gdy jest w kol poj_silnika
+  if (dane16$poj_silnika[i] %in% rok_prawidłowe & !is.na(dane16$rok[i])) {
+    dane16$poj_silnika[i] <- NA
+  }
+  if (dane16$poj_silnika[i] %in% paliwo_prawidlowe) {
+    if (is.na(dane16$paliwo[i])) {
+      dane16$paliwo[i] <- dane16$poj_silnika[i]
+      dane16$poj_silnika[i] <- NA
+    }
+    if (dane16$paliwo[i] %in% paliwo_prawidlowe) {
+      dane16$poj_silnika[i] <- NA
+    }
+  }
+}
+
+View(dane16)
+
+# sprawdam jeszcze raz czy coś poza cm3 jest w poj_silnika (pusta tabela)
+
+View(dane16[!grepl("cm3", dane16$poj_silnika) & !is.na(dane16$poj_silnika), ])
+
+unique(dane16$marka)
+View(dane16[!grepl("km", dane16$przebieg_w_milach) & !is.na(dane16$przebieg_w_milach), ])
+unique(dane16$skrzynia_biegow)
+unique(dane16$paliwo)
+unique(dane16$rok)
+View(dane16[!grepl("cm3", dane16$poj_silnika) & !is.na(dane16$poj_silnika), ])
+
+########################################################################
+# CAŁA TABELA ZOSTAŁA OCZYSZCZONA
+########################################################################
+
+write.csv(dane16,"C:/Users/MSI/Desktop/AG II/Analiza danych/Projekt/Projekt---Analiza-danych/Kody/dane_wyczyszczone_rownamesTRUE.csv", row.names = TRUE)
