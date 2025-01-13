@@ -56,7 +56,7 @@ dane3$poj_silnika <- as.integer(dane3$poj_silnika)
 dane3$paliwo <- factor(dane3$paliwo)
 dane3$miasto <- factor(dane3$miasto)
 dane3$wojewodztwo <- factor(dane3$wojewodztwo)
-dane3$rok <- as.integer(dane3$rok)
+dane3$rok <- as.integer(dane3$rok)s
 
 
 str(dane3)
@@ -67,3 +67,5 @@ sum(complete.cases(dane3))
 nrow(dane3[complete.cases(dane3), ]) / nrow(dane3)
 
 boxplot(poj_silnika ~ paliwo, data = dane3)
+
+saveRDS(dane3, file = "analiza/statystyka_opisowa.Rda")
