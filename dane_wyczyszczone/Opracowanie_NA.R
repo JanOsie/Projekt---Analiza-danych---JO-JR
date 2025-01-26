@@ -14,6 +14,17 @@ View(dane_wyczyszczone_rownamesTRUE)
 
 dane <- dane_wyczyszczone_rownamesTRUE[ ,-1]
 
+for (i in 1:nrow(dane)) {
+  # przenieść km do przebiegu, poźniej usunąć
+  if (grepl("km", dane$rok[i]) & is.na(dane$przebieg_w_milach[i])) {
+    dane$przebieg_w_milach[i] <- dane$rok[i]
+    dane$rok[i] <- NA
+  }
+  if (grepl("km", dane$rok[i])) {
+    dane$rok[i] <- NA
+  }
+}
+
 # zmieniam na tibble
 
 dane <- as_tibble(dane)
@@ -56,20 +67,8 @@ dane3$poj_silnika <- as.integer(dane3$poj_silnika)
 dane3$paliwo <- factor(dane3$paliwo)
 dane3$miasto <- factor(dane3$miasto)
 dane3$wojewodztwo <- factor(dane3$wojewodztwo)
-dane3$rok <- as.integer(dane3$rok)s
+dane3$rok <- as.integer(dane3$rok)
 
 
-str(dane3)
-glimpse(dane3)
+dane3 <- write.csv(dane3,"C:/Users/MSI/Desktop/AG II/Analiza danych/Projekt/Projekt---Analiza-danych/Kody/dane_wyczyszczone.csv", row.names = FALSE)
 
-sum(complete.cases(dane3))
-
-nrow(dane3[complete.cases(dane3), ]) / nrow(dane3)
-
-# Analiza opisowa
-
-min(dane3$cena_zl, na.rm = TRUE)
-
-boxplot(poj_silnika ~ paliwo, data = dane3)
-
-saveRDS(dane3, file = "analiza/statystyka_opisowa.Rda")
