@@ -66,4 +66,8 @@ sum(complete.cases(dane3))
 
 nrow(dane3[complete.cases(dane3), ]) / nrow(dane3)
 
+# Analiza opisowa
+
+min(dane3$cena_zl, na.rm = TRUE)
+
 boxplot(poj_silnika ~ paliwo, data = dane3)
