@@ -1,0 +1,154 @@
+XXX
+
+`{r} # kod do wyświetlenia wstępnego tabeli}`
+
+XXX
+
+```         
+dane %>%    zrób coś %>%    a potem  jeszcze coś %>%   a potem wylicz/narysuj...
+```
+
+XXX
+
+# Raport z projektu - Oferty samochodów używanych w Polsce
+
+Julia Rutkowska, Jan Osiecki, Daryna Pyatkevych
+
+## 0. O zbiorze danych
+
+Zbiór danych pozyskany z największego polskiego serwisu z ponad 90 tysięcami ofertami samochodów używanych i nowych otomoto.pl.
+
+-   **marka**: Marka lub producent samochodu, np. Volkswagen, Toyota, BMW, Ford itp.
+
+-   **model**: Model samochodu
+
+-   **cena**: Podana cena samochodu w polskich złotych (PLN), zapewniająca wgląd w trendy cenowe samochodów używanych w Polsce.
+
+-   **przebieg**: Zarejestrowany przebieg samochodu, reprezentujący całkowity dystans przejechany przez pojazd w kilometrach (km).
+
+-   **skrzynia biegów**: Typ skrzyni biegów używanej w samochodzie, oznaczony jako manualna lub automatyczna.
+
+-   **pojemność silnika**: Pojemność silnika lub pojemność skokowa samochodu, mierzona w centymetrach sześciennych (cm3), wskazująca rozmiar silnika.
+
+-   **paliwo**: Rodzaj paliwa używanego przez samochód, w tym opcje takie jak benzyna, olej napędowy, napęd hybrydowy, elektryczny itp.
+
+-   **miasto**: Miasto, w którym samochód jest zlokalizowany lub reklamowany na sprzedaż, oferując wgląd w regionalne różnice w dostępności używanych samochodów.
+
+-   **województwo**: Region administracyjny lub województwo, w którym znajduje się miasto, zapewniające bardziej szczegółowe odniesienie do lokalizacji.
+
+-   **rok**: Rok produkcji samochodu, reprezentujący jego wiek i umożliwiający czasową analizę rynku samochodów używanych.
+
+Analizując ten zbiór danych, naukowcy mogą badać różne aspekty polskiego rynku samochodów używanych, takie jak rozkład cen według marki i modelu, związek między przebiegiem a ceną, popularne rodzaje paliwa i ich dostępność w różnych regionach oraz wpływ wieku samochodu na ceny. Dodatkowo, ten zbiór danych może ułatwić opracowanie modeli predykcyjnych do szacowania wartości używanych samochodów na podstawie ich specyfikacji i historycznych trendów rynkowych.
+
+## 1. Data Wrangling
+
+Po zapoznaniu się z bazą danych przejrzeliśmy ręcznie poszczególne wiersze by zobaczyć strukturę danych. Poza brakującymi wartościami znaleźliśmy wiele wierszy, w których dane były wpisane w złych kolumnach. Zaczeliśmy pracę od uporządkowania tego.
+
+\`\`\`{r} \# pierwsze 10 wartości} XXXXXXXXXXXXX
+
+XXXXXXXXXXXX
+
+```         
+```
+
+### 1.1 Identyfikacja wartości błędnych (nie brakujących)
+
+```         
+
+```{r} # przykładowe błędne wartości w kolumnie XXXXXX}
+```
+
+```         
+wyniki
+```
+
+```{r}
+# czyszcenie w kolumnie poj_silnika
+for (i in 1:nrow(dane16)) {
+  # przenieść km do przebiegu, poźniej usunąć
+  if (grepl("km", dane16$poj_silnika[i]) & is.na(dane16$przebieg_w_milach[i])) {
+    dane16$przebieg_w_milach[i] <- dane16$poj_silnika[i]
+    dane16$poj_silnika[i] <- NA
+  } 
+  # przenieść rok do kol rok, później usunąć
+  if (dane16$poj_silnika[i] %in% rok_prawidłowe & is.na(dane16$rok[i])) {
+    dane16$rok[i] <- dane16$poj_silnika[i]
+    dane16$poj_silnika[i] <- NA
+  }
+  # jeśli rok już jest to usunąć rok gdy jest w kol poj_silnika
+  if (dane16$poj_silnika[i] %in% rok_prawidłowe & !is.na(dane16$rok[i])) {
+    dane16$poj_silnika[i] <- NA
+  }
+  # usuwanie nazw paliw z poj_silnika
+  if (dane16$poj_silnika[i] %in% paliwo_prawidlowe) {
+    # gdy nie ma wartości w kolumnie paliwo to ją wstaw z kolumy poj_silnika
+    if (is.na(dane16$paliwo[i])) {
+      dane16$paliwo[i] <- dane16$poj_silnika[i]
+      dane16$poj_silnika[i] <- NA
+    }
+    # gdy w kolumnie paliwo jest paliwo to usuń z kolumny poj_silnika
+    if (dane16$paliwo[i] %in% paliwo_prawidlowe) {
+      dane16$poj_silnika[i] <- NA
+    }
+  }
+}
+
+# sprawdam jeszcze raz czy coś poza cm3 jest w poj_silnika (pusta tabela)
+
+View(dane16[!grepl("cm3", dane16$poj_silnika) & !is.na(dane16$poj_silnika), ])
+
+```
+
+```         
+WYNIK Z VIEW
+```
+
+W wyniku "porządkowania" jak powyżej baza danych została z prawidłowymi wartościami bądź brakującymi.
+
+### 1.1 Identyfikacja wartości brakujących
+
+```{r}
+# Łączna liczba brakujących wartości
+n_miss(dane)
+```
+
+```         
+[1] 5833
+```
+
+```{r}
+# Łączna liczba brakujących wartości z podziałem na kolumny
+miss_var_summary(dane)
+```
+
+```         
+# A tibble: 10 × 3
+   variable        n_miss pct_miss
+   <chr>            <int>    <num>
+ 1 rok               2730    2.98 
+ 2 cena_zl           1550    1.69 
+ 3 poj_silnika       1219    1.33 
+ 4 przebieg_w_km      334    0.365
+ 5 marka                0    0    
+ 6 model                0    0    
+ 7 skrzynia_biegow      0    0    
+ 8 paliwo               0    0    
+ 9 miasto               0    0    
+10 wojewodztwo          0    0  
+```
+
+```{r}
+# wiersze, w których brakuje dana liczba brakujących wartości
+dane %>% 
+  miss_case_table()
+```
+
+```         
+# A tibble: 4 × 3
+  n_miss_in_case n_cases pct_cases
+           <int>   <int>     <dbl>
+1              0   86206  94.2    
+2              1    4808   5.25   
+3              2     502   0.548  
+4              3       7   0.00765
+```
