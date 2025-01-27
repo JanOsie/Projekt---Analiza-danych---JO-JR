@@ -46,12 +46,15 @@ vis_miss(dane[, c("rok", "cena_zl", "poj_silnika", "przebieg_w_km")], sort_miss 
 gg_miss_upset(dane[, c("rok", "cena_zl", "poj_silnika", "przebieg_w_km")], 
               nsets = 4)
 
-
+# zależność występowania NA miedzy zmiennymi dotyczących ceny a rokiem 
 ggplot(data = dane, aes(x = rok, y = cena_zl)) + 
   geom_point() +
   geom_miss_point() +
-  scale_color_manual(values = c("darkorange","cyan4")) +
+  scale_color_manual(values = c("red","navyblue")) +
   theme_minimal()
+
+# Procentowy udział brakujących wartości w podziale na typ paliwa
+gg_miss_var(dane, facet = paliwo, show_pct = TRUE)
 
 # imputacja metodą KNN - metoda K-najbliższych sąsiadów
 
@@ -60,3 +63,10 @@ dane2_knn <- kNN(dane2)
 daneknn <- dane2_knn %>% select(where(~ !is.logical(.)))
 n_miss(daneknn)
 
+# wizualizacja imputowanych wartości
+dane2_knn %>%
+  ggplot() +
+  geom_point(mapping = aes(x = rok, 
+                           y = cena_zl, 
+                           col=cena_zl_imp)) +
+  scale_color_manual(values = c("#00800010","red"))
