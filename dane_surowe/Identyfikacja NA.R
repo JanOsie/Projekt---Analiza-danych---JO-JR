@@ -53,6 +53,50 @@ ggplot(data = dane, aes(x = rok, y = cena_zl)) +
   scale_color_manual(values = c("red","navyblue")) +
   theme_minimal()
 
+# zależność występowania NA miedzy zmiennymi dotyczących roku a pojemności silnika 
+ggplot(data = dane, aes(x = rok, y = poj_silnika)) + 
+  geom_point() +
+  geom_miss_point() +
+  scale_color_manual(values = c("orange","green3")) +
+  theme_minimal()
+
+# zależność występowania NA miedzy zmiennymi dotyczących roku a przebiegiem 
+ggplot(data = dane, aes(x = rok, y = przebieg_w_km)) + 
+  geom_point() +
+  geom_miss_point() +
+  scale_color_manual(values = c("gold","steelblue1")) +
+  theme_minimal()
+
+# zależność występowania NA miedzy zmiennymi dotyczących pojemności silnika a ceną 
+ggplot(data = dane, aes(x = poj_silnika, y = cena_zl)) + 
+  geom_point() +
+  geom_miss_point() +
+  scale_color_manual(values = c("lightslateblue","sienna1")) +
+  theme_minimal()
+
+# zależność występowania NA miedzy zmiennymi dotyczących ceny a przebiegu 
+ggplot(data = dane, aes(x = cena_zl, y = przebieg_w_km)) + 
+  geom_point() +
+  geom_miss_point() +
+  scale_color_manual(values = c("magenta4","turquoise4")) +
+  theme_minimal()
+
+# zależność występowania NA miedzy zmiennymi dotyczących pojemności silnika a przebiegiem 
+ggplot(data = dane, aes(x = poj_silnika, y = przebieg_w_km)) + 
+  geom_point() +
+  geom_miss_point() +
+  scale_color_manual(values = c("hotpink3","forestgreen")) +
+  theme_minimal()
+
+# Heatmapa brakujących wartości z podziałem na markę
+gg_miss_fct(x = dane, fct = marka)
+
+# Heatmapa brakujących wartości z podziałem na rok
+gg_miss_fct(x = dane, fct = rok)
+
+# wykres skumulowana suma brakujących wartości
+gg_miss_case_cumsum(dane, breaks = 5000) + theme_bw()
+
 # Procentowy udział brakujących wartości w podziale na typ paliwa
 gg_miss_var(dane, facet = paliwo, show_pct = TRUE)
 

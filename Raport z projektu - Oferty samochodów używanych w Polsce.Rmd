@@ -1,15 +1,3 @@
-XXX
-
-`{r} # kod do wyświetlenia wstępnego tabeli}`
-
-XXX
-
-```         
-dane %>%    zrób coś %>%    a potem  jeszcze coś %>%   a potem wylicz/narysuj...
-```
-
-XXX
-
 # Raport z projektu - Oferty samochodów używanych w Polsce
 
 Julia Rutkowska, Jan Osiecki, Daryna Pyatkevych
@@ -151,4 +139,123 @@ dane %>%
 2              1    4808   5.25   
 3              2     502   0.548  
 4              3       7   0.00765
+```
+
+```{r}
+# wykresy zmiennych w których brakuje wartości (malejąco)
+vis_miss(dane[, c("rok", "cena_zl", "poj_silnika", "przebieg_w_km")], sort_miss = TRUE, cluster = TRUE)
+```
+
+Trzeba dac zdj z clustrem = True
+
+![](http://127.0.0.1:8209/graphics/e3433f11-f9b1-4f78-947d-bcac41b4d135.png)
+
+```{r}
+# współwystępowanie NA między zmiennymi
+gg_miss_upset(dane[, c("rok", "cena_zl", "poj_silnika", "przebieg_w_km")], 
+              nsets = 4)
+```
+
+![](http://127.0.0.1:8209/graphics/afc36238-38e5-4633-9f6f-2104cb709a6c.png)
+
+```{r}
+# zależność występowania NA miedzy zmiennymi dotyczących ceny a rokiem 
+ggplot(data = dane, aes(x = rok, y = cena_zl)) + 
+  geom_point() +
+  geom_miss_point() +
+  scale_color_manual(values = c("red","navyblue")) +
+  theme_minimal()
+```
+
+![](http://127.0.0.1:8209/graphics/6b1b1ad8-a639-46e9-b05a-22ac1f48b5dd.png)
+
+```{r}
+# zależność występowania NA miedzy zmiennymi dotyczących roku a pojemności silnika 
+ggplot(data = dane, aes(x = rok, y = poj_silnika)) + 
+  geom_point() +
+  geom_miss_point() +
+  scale_color_manual(values = c("orange","green3")) +
+  theme_minimal()
+```
+
+![](http://127.0.0.1:8209/graphics/aa999291-70ce-435d-b16a-c12098e8bb29.png)
+
+```{r}
+# zależność występowania NA miedzy zmiennymi dotyczących roku a przebiegiem 
+ggplot(data = dane, aes(x = rok, y = przebieg_w_km)) + 
+  geom_point() +
+  geom_miss_point() +
+  scale_color_manual(values = c("gold","steelblue1")) +
+  theme_minimal()
+```
+
+![](http://127.0.0.1:8209/graphics/306613e1-73ac-4ed8-baa5-6f27a7504b2e.png)
+
+```{r}
+# zależność występowania NA miedzy zmiennymi dotyczących pojemności silnika a ceną 
+ggplot(data = dane, aes(x = poj_silnika, y = cena_zl)) + 
+  geom_point() +
+  geom_miss_point() +
+  scale_color_manual(values = c("lightslateblue","sienna1")) +
+  theme_minimal()
+```
+
+![](http://127.0.0.1:8209/graphics/99e9a6dc-8333-4762-b969-c202cfba3af1.png)
+
+```{r}
+# zależność występowania NA miedzy zmiennymi dotyczących ceny a przebiegu 
+ggplot(data = dane, aes(x = cena_zl, y = przebieg_w_km)) + 
+  geom_point() +
+  geom_miss_point() +
+  scale_color_manual(values = c("magenta4","turquoise4")) +
+  theme_minimal()
+```
+
+![](http://127.0.0.1:8209/graphics/79398abd-7d27-4fbf-8315-9beba2372c69.png)
+
+```{r}
+# zależność występowania NA miedzy zmiennymi dotyczących pojemności silnika a przebiegiem 
+ggplot(data = dane, aes(x = poj_silnika, y = przebieg_w_km)) + 
+  geom_point() +
+  geom_miss_point() +
+  scale_color_manual(values = c("hotpink3","forestgreen")) +
+  theme_minimal()
+```
+
+![](http://127.0.0.1:8209/graphics/488a0921-1661-41f8-96d4-cf5af163cc2a.png)
+
+```{r}
+# Procentowy udział brakujących wartości w podziale na typ paliwa
+gg_miss_var(dane, facet = paliwo, show_pct = TRUE)
+```
+
+![](http://127.0.0.1:8209/graphics/e8fcf9b0-64cf-482f-a9c7-1dc970cb34cb.png)
+
+```{r}
+# Heatmapa brakujących wartości z podziałem na markę
+gg_miss_fct(x = dane, fct = marka)
+```
+
+![](http://127.0.0.1:8209/graphics/b73bec89-48d7-4178-96f6-a1ecbfbf8d2b.png)
+
+```{r}
+# Heatmapa brakujących wartości z podziałem na rok
+gg_miss_fct(x = dane, fct = rok)
+```
+
+![](http://127.0.0.1:8209/graphics/31cc5818-d5bb-468a-a07c-29fbc784f953.png)
+
+```{r}
+# wykres skumulowana suma brakujących wartości
+gg_miss_case_cumsum(dane, breaks = 5000) + theme_bw()
+```
+
+![](http://127.0.0.1:8209/graphics/1e169adc-128d-4d35-8bcf-ee8ffa127e53.png)
+
+```{r}
+# imputacja metodą KNN - metoda K-najbliższych sąsiadów
+dane2 <- dane
+dane2_knn <- kNN(dane2)
+daneknn <- dane2_knn %>% select(where(~ !is.logical(.)))
+n_miss(daneknn)
 ```
