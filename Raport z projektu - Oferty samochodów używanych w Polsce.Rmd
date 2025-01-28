@@ -259,3 +259,52 @@ dane2_knn <- kNN(dane2)
 daneknn <- dane2_knn %>% select(where(~ !is.logical(.)))
 n_miss(daneknn)
 ```
+Analiza opisowa 
+
+W celu lepszego zrozumienia danych oraz ich potencjalnego wykorzystania przeprowadziliśmy analizę opisową. 
+Dla skutecznego wykorzystania danych, usunęliśmy zbędne spacje z nazw kolumn, zapisaliśmy niektóre kolumny jako wartości numeryczne oraz wybraliśmy biblioteki z których będziemy korzystać dla przeprowadzenia testów statystycznych oraz wizualizacji danych
+```{r}
+# Usunięcie zbędnych spacji z nazw kolumn
+colnames(dane) <- trimws(colnames(dane))
+
+# Konwersja odpowiednich kolumn na wartości numeryczne
+dane$poj_silnika <- as.numeric(gsub("[^0-9]", "", dane$poj_silnika))
+dane$przebieg_w_km <- as.numeric(gsub("[^0-9]", "", dane$przebieg_w_km))
+dane$rok <- as.numeric(dane$rok)
+
+# Ładowanie bibliotek
+library(dplyr)
+library(ggplot2)
+library(ggstatsplot)
+library(corrplot)
+library(knitr)
+```
+Pierwszym krokiem naszej analizie jest przedstawienie danych jako tabel liczności
+
+```{r}
+# 1. Tabele liczności dla każdej zmiennej
+tabele <- list(
+  marka = dane %>% count(marka, sort = TRUE),
+  model = dane %>% count(model, sort = TRUE),
+  wojewodztwo = dane %>% count(wojewodztwo, sort = TRUE),
+  rok = dane %>% count(rok, sort = TRUE),
+  paliwo = dane %>% count(paliwo, sort = TRUE),
+  skrzynia_biegow = dane %>% count(skrzynia_biegow, sort = TRUE),
+  poj_silnika = dane %>% count(poj_silnika, sort = TRUE),
+  miasto =  dane %>% count(miasto, sort = TRUE)
+)
+
+# Wyświetlenie tabel liczności
+tabele_md <- lapply(tabele, function(tbl) {
+  kable(tbl, format = "markdown", col.names = c("Kategoria", "Liczba"))
+})
+
+# Wyświetlenie tabel
+names(tabele_md) <- c("Marka", "Model", "Województwo", "Rok", "Paliwo", "Skrzynia biegów", "Pojemność silnika", "Miasto")
+
+for (nazwa in names(tabele_md)) {
+  cat(paste0("\n## ", nazwa, "\n\n")) 
+  cat(tabele_md[[nazwa]], "\n\n")   
+}
+```
+Na podstawie tabeli liczności, możemy zobaczyć między innymi ilość transakcji w każdym mieście lub województwie, ile zostało przeprowadzonych transakcji z samochodami o danych charakterystykach. 
