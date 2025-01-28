@@ -432,5 +432,78 @@ dev.off()
   Cena wykazuje umiarkowaną korrelację z rokiem produkcji (r=0,47), co sugeruje, że nowsze samochody są droższe. Natomiast niską korrelację z pojemnością silnika oraz ujemną korelację z przebiegiem, co oznacza, że każdy dodatkowy kilometr obniża cenę samochodu. Przebieg ma silną korrelację z rokiem produkcji, co jest dosyć oczywistym stwierdzeniem, że starsze samochody mają większy przebieg. Pojemność silnika wykazuje bardzo słabe korelacje z innymi zmiennymi. Rok produkcji jest silnie skorelowany z ceną i bardzo silnie ujemnie z przebiegiem, co podkreśla znaczenie wieku samochodu w kontekście jego wartości i użytkowania. 
   Najistotniejsze czynniki wpływające na cenę samochodu to rok produkcji i przebieg, co zgadza się z intuicyjnym podejściem do wyceny pojazdów. Pojemność silnika ma stosunkowo niewielki wpływ na cenę, a jej korelacje z innymi zmiennymi są słabe.
 
+Testy statystyczne
+Kolejną częścią raportu jest przeprowadzenie przykładowych testów statystycznych 
+
+W celu przedstawienia współzależności pomiędzy dwiema zmiennymi kategorycznymi w postaci tabeli oraz sprawdzenia istnienia takowej współzależności stworzyliśmy tabele kontyngencji oraz przeprowadziliśmy test chi-kwadrat. Sprawdziliśmy czy wybór marki zależy od województwa, typ skrzyni biegu zależy od rodzaju paliwa, czy wybór modelu zależy od miasta. 
+
+# 6. Testy statystyczne
+# Tabela kontyngencji i test chi-kwadrat
+tabela_marka_wojewodztwo <- table(dane$marka, dane$wojewodztwo)
+print(tabela_marka_wojewodztwo)
+chi_sq_result <- chisq.test(tabela_marka_wojewodztwo)
+print(chi_sq_result)
+tabela_paliwo_skrzynia <- table(dane$paliwo, dane$skrzynia_biegow)
+print(tabela_paliwo_skrzynia)
+chi_sq_result1 <- chisq.test(tabela_paliwo_skrzynia )
+print(chi_sq_result1)
+tabela_model_miasto <- table(dane$model, dane$miasto)
+print(tabela_model_miasto)
+chi_sq_result2 <- chisq.test(tabela_model_miasto )
+print(chi_sq_result2)
+png("mozaikowy_paliwo_skrzynia.png", width = 800, height = 600)
+mosaicplot(tabela_paliwo_skrzynia, 
+           main = "Relacja między rodzajem paliwa a skrzynią biegów", 
+           color = TRUE, 
+           shade = TRUE, 
+           las = 1, 
+           cex.axis = 0.9) 
+dev.off()
+```
+Statystyka testowa (X-squared) = 5174.1 jest bardzo wysoka. Wskazuje to na dużą różnicę między obserwowaną a oczekiwaną liczbą w tabeli kontyngencji, co sugeruje potencjalną zależność między zmiennymi. Stopnie swobody (df) = 1050 oznacza liczbę swobody, która zależy od liczby kategorii obu zmiennych. Wysoka liczba stopni swobody sugeruje, że jedna lub obie zmienne mają wiele kategorii. Wartość p (p-value):p<2.2×10 −16, czyli wartość p jest znacznie mniejsza niż typowy poziom istotności. Oznacza to, że istnieje statystycznie istotna zależność między marką a województwem. A więc przyjmuje hipotezę o zależności wyboru marki od miejsca zamieszkania(województwo).
+Wygenerowaliśmy również przykładowy wykres mozaikowy do zależności rodzaju skrzyni biegów od rodzaju paliwa. Istnieje statystycznie istotna zależność między rodzajem paliwa a typem skrzyni biegów. Wynik testu sugeruje, że niektóre rodzaje paliwa są bardziej związane z konkretnymi typami skrzyń biegów. Skrzynie automatyczne są bardziej popularne w pojazdach z określonym rodzajem paliwa (np. elektryczne lub hybrydowe). Skrzynie manualne częściej występują w pojazdach z silnikami spalinowymi.
+Wynikiem testu chi-kwadrat dla zależności wyboru modelu samochodu są bardzo duże stopnie swobody, co oznacza zbyt wielką ilość kategorii 
+![Wykres mozaikowy paliwo vs skrzynia biegów](mozaikowy_paliwo_skrzynia.png)
+
+Kolejnym testem jest test proporcji, żeby sprawdzić rozłożenie róznych zmiennych. Sprawdzimy różnice pod względem liczby samochodów w różnych wojewóztwach
+
+```{r}
+# Testowanie proporcji
+prop_table <- prop.table(table(dane$wojewodztwo))
+test_proporcji <- chisq.test(table(dane$wojewodztwo))
+print(test_proporcji)
+
+# Wizualizacja proporcji
+proporcje <- ggplot(as.data.frame(prop_table), aes(x = Var1, y = Freq)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Proporcje samochodów w województwach", x = "Województwo", y = "Proporcja") +
+  theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ggsave("wykres_proporcje.png", plot = proporcje, width = 10, height = 6, dpi = 300)
+```
+
+Wyniki testu:
+Statystyka testowa 151,161 jest bardzo wysoka, co wskazuje na istotne różnice między obserwowaną a oczekiwaną liczbą samochodów w województwach.
+Stopnie swobody 25, co oznacza, że test uwzględnia rozkład samochodów w 26 województwach. Wartość p<2.2×10 −16, co oznacza statystycznie istotne różnice w proporcjach. Rozkład samochodów w województwach nie jest równomierny. Województwa różnią się znacząco pod względem liczby samochodów. Różnice te mogą wynikać z gęstości zaludnienia, poziomu urbanizacji, dostępności określonych marek lub modeli.
+
+![Proporcje samochodów w województwach](wykres_proporcje.png)
+
+Następnie oszacowaliśmy model regresji, żeby zbadać jak przebieg, pojemność silnika i rok wpływają na wartość samochodu oraz identyfikować istotne czynniki determinujące cenę.
+```{r}
+# 7. Regresja liniowa i korelacja
+# Regresja liniowa: Cena jako funkcja przebiegu, pojemności silnika i roku produkcji
+model <- lm(cena_zl ~ przebieg_w_km + poj_silnika + rok, data = dane)
+summary(model)
+
+# Wizualizacja regresji dla przebiegu
+ggplot(dane, aes(x = przebieg_w_km, y = cena_zl)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", color = "blue") +
+  labs(title = "Regresja: Cena a przebieg", x = "Przebieg (w milach)", y = "Cena (zł)") +
+  theme_minimal()
+```
+
+
+
+
 
 
