@@ -337,3 +337,100 @@ for (nazwa in names(tabele)) {
 
 ![Wykres tabela liczności - Marka](wykres_marka.png) ![Wykres tabela liczności - Miasta](wykres_miasto.png) ![Wykres tabela liczności - Model](wykres_model.png) ![Wykres tabela liczności - Paliwo](wykres_paliwo.png) ![Wykres tabela liczności - Pojemność Silnika](wykres_poj_silnika.png) ![Wykres tabela liczności - Rok](wykres_rok.png) ![Wykres tabela liczności - Skrzynia biegów](wykres_skrzynia_biegow.png) ![Wykres tabela liczności - Województwa](wykres_wojewodztwo.png)
 
+Z wykresów możemy wywnioskować, że najwięcej ofert na portalu jest dla marki Volkswagen, a najmniej Lamborghini. Najczęstszymi rodzajami paliwa są paliwo oraz diesel, natomiast ofert z wodorowym napędem na portalu nie ma. Najwięcej samochodów zamieszczonych na portalu są 2018 roku produkcji, natomiast najrzadziej 1995.Więcej ofert jest dla samochodów z manualną skrzynią biegów niż automatyczną.Mazowieckie województwo jest liderem pod względem dostępnych ofert.
+
+Ze względu na bardzo dużą liczbę danych dla zmiennyc: model, miasto, poj_silnika wygenerowane wykresy są nieczytelne, więc dla nich musimy zastosować inne metody generowania wykresów.
+
+Dla wykresu dla zmiennej model wygenerujemy 10 najczęściej wybieranych modeli i dla nich wygenerujemy wykres. 
+
+```{r}
+
+# Funkcja do tworzenia wykresów top i bottom 10
+wykres_top_bottom <- function(dane, nazwa) {
+  top_10 <- dane %>% top_n(10, n)
+  bottom_10 <- dane %>% top_n(-10, n)
+  
+  p1 <- ggplot(top_10, aes(x = reorder(Kategoria, n), y = n)) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    coord_flip() +
+    labs(title = paste("Top 10", nazwa), x = nazwa, y = "Liczba") +
+    theme_minimal()
+  
+  p2 <- ggplot(bottom_10, aes(x = reorder(Kategoria, n), y = n)) +
+    geom_bar(stat = "identity", fill = "red") +
+    coord_flip() +
+    labs(title = paste("Bottom 10", nazwa), x = nazwa, y = "Liczba") +
+    theme_minimal()
+  
+  return(list(p1, p2))
+}
+
+# Wczytanie danych
+tabele <- lapply(tabele, function(tbl) {
+  colnames(tbl) <- c("Kategoria", "n")
+  tbl
+})
+wykres_model <- wykres_top_bottom(tabele[["model"]], "Model")
+ggsave("wykres_top_model.png", plot = ploty_model[[1]], width = 8, height = 6)
+
+```
+![Wykres tabela liczności - Model](wykres_top_model.png)
+
+Opel astra jest najczęściej sprzedawanym modelem. 
+
+Dla lepszego zrozumienia danych sprawdziliśmy podstawowe statystyki dla zmiennych numerycznych.
+```{r}
+# 3. Statystyki opisowe
+statystyki_opisowe <- dane %>%
+  summarise(
+    MinCena = min(cena_zl, na.rm = TRUE),
+    SredniaCena = mean(cena_zl, na.rm = TRUE),
+    MedianaCena = median(cena_zl, na.rm = TRUE),
+    MaxCena = max(cena_zl, na.rm = TRUE),
+    OdchylenieCena = sd(cena_zl, na.rm = TRUE),
+    IQR_Cena = IQR(cena_zl, na.rm = TRUE),
+    MinPrzebieg = min(przebieg_w_km, na.rm = TRUE),
+    SredniPrzebieg = mean(przebieg_w_km, na.rm = TRUE),
+    MaxPrzebieg = max(przebieg_w_km, na.rm = TRUE),
+    MinRok = min(rok, na.rm = TRUE),
+    MaxRok = max(rok, na.rm = TRUE)
+  )
+print(statystyki_opisowe)
+
+# 4. Wyświetlenie raportu i wykresu dla statystyk opisowych
+statystyki_opisowe <- data.frame(
+  Statystyka = names(statystyki_opisowe),
+  Wartość = unlist(statystyki_opisowe)
+)
+p_statystyki <- ggplot(statystyki_opisowe, aes(x = Statystyka, y = Wartość)) +
+  geom_col(fill = "blue") +
+  labs(
+    title = "Podstawowe statystyki opisowe",
+    x = "Statystyka",
+    y = "Wartość"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ggsave("statystyki_opisowe.png", plot = p_statystyki, width = 8, height = 6)
+
+
+```
+
+Najniższa cena na portalu o 1111 zł, średnia cena za samochód to 84146,29 zł, mediana natiomiast plasuje się na poziomie 49900. 
+
+W celu zbadania zależności pomiędzy zmiennymi zależnymi tworzymy macierz korrelacji oraz odpowiedni wykres
+```{r}
+num_cols <- dane %>% select(where(is.numeric)) # Wybierz kolumny numeryczne
+cor_matrix <- cor(num_cols, use = "complete.obs")
+print(cor_matrix)
+png("wykres_korelacji.png", width = 800, height = 800) # Utwórz plik PNG
+corrplot(cor_matrix, method = "circle", type = "lower", tl.col = "black", tl.srt = 45)
+dev.off()
+```
+![Wykres macierz korrelacji](wykres_korelacji.png)
+
+  Cena wykazuje umiarkowaną korrelację z rokiem produkcji (r=0,47), co sugeruje, że nowsze samochody są droższe. Natomiast niską korrelację z pojemnością silnika oraz ujemną korelację z przebiegiem, co oznacza, że każdy dodatkowy kilometr obniża cenę samochodu. Przebieg ma silną korrelację z rokiem produkcji, co jest dosyć oczywistym stwierdzeniem, że starsze samochody mają większy przebieg. Pojemność silnika wykazuje bardzo słabe korelacje z innymi zmiennymi. Rok produkcji jest silnie skorelowany z ceną i bardzo silnie ujemnie z przebiegiem, co podkreśla znaczenie wieku samochodu w kontekście jego wartości i użytkowania. 
+  Najistotniejsze czynniki wpływające na cenę samochodu to rok produkcji i przebieg, co zgadza się z intuicyjnym podejściem do wyceny pojazdów. Pojemność silnika ma stosunkowo niewielki wpływ na cenę, a jej korelacje z innymi zmiennymi są słabe.
+
+
+
