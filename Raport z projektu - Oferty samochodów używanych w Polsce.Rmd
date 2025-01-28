@@ -308,3 +308,32 @@ for (nazwa in names(tabele_md)) {
 }
 ```
 Na podstawie tabeli liczności, możemy zobaczyć między innymi ilość transakcji w każdym mieście lub województwie, ile zostało przeprowadzonych transakcji z samochodami o danych charakterystykach. 
+
+```{r}
+
+tabele <- lapply(tabele, function(tbl) {
+  colnames(tbl) <- c("Kategoria", "n")
+  tbl
+})
+
+for (nazwa in names(tabele)) {
+  tabela <- tabele[[nazwa]]
+  
+  # Tworzenie wykresu
+  p <- ggplot(tabela, aes(x = reorder(Kategoria, n), y = n)) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    coord_flip() +
+    labs(
+      title = paste("Liczba samochodów wg", nazwa),
+      x = nazwa,
+      y = "Liczba"
+    ) +
+    theme_minimal()
+  
+  # Zapis wykresu
+  ggsave(paste0("wykres_", nazwa, ".png"), plot = p, width = 8, height = 6)
+}
+```
+
+![Wykres tabela liczności - Marka](wykres_marka.png) ![Wykres tabela liczności - Miasta](wykres_miasto.png) ![Wykres tabela liczności - Model](wykres_model.png) ![Wykres tabela liczności - Paliwo](wykres_paliwo.png) ![Wykres tabela liczności - Pojemność Silnika](wykres_poj_silnika.png) ![Wykres tabela liczności - Rok](wykres_rok.png) ![Wykres tabela liczności - Skrzynia biegów](wykres_skrzynia_biegow.png) ![Wykres tabela liczności - Województwa](wykres_wojewodztwo.png)
+
