@@ -487,21 +487,46 @@ Stopnie swobody 25, co oznacza, że test uwzględnia rozkład samochodów w 26 w
 
 ![Proporcje samochodów w województwach](wykres_proporcje.png)
 
-Następnie oszacowaliśmy model regresji, żeby zbadać jak przebieg, pojemność silnika i rok wpływają na wartość samochodu oraz identyfikować istotne czynniki determinujące cenę.
+Następnie oszacowaliśmy model regresji, żeby zbadać jak przebieg, pojemność silnika, rok, skrzynia biegów i rodzaj paliwa wpływają na wartość samochodu oraz identyfikować istotne czynniki determinujące cenę.
 ```{r}
 # 7. Regresja liniowa i korelacja
 # Regresja liniowa: Cena jako funkcja przebiegu, pojemności silnika i roku produkcji
-model <- lm(cena_zl ~ przebieg_w_km + poj_silnika + rok, data = dane)
+model <- lm(cena_zl ~ przebieg_w_km + poj_silnika + rok + skrzynia_biegow
+            + paliwo, data = dane)
 summary(model)
+```
+Model nie jest najlepiej dopasowanym modelem, o czym świadczy statystyka R2, która wynosi 0,3767. Model wyjaśnia tylko 37% wariancji ceny. Analizując opracowany model regresji, możemy stwierdzić, że większość zmiennych są istotne statystycznie na poziomie istotności 0,05. 
+Żeby lepiej wyjaśnić model, do modelu regresji dodamy zmienną marka oraz wojewodztwo.
 
+```{r}
+model <- lm(cena_zl ~ przebieg_w_km + poj_silnika + rok + skrzynia_biegow
+            + paliwo + marka + wojewodztwo, data = dane)
+summary(model)
+```
+Powyższy model lepiej wyjaśnia zmiany cen, statystyka R2 = 0,5111. W tym modelu zmienne odpowiadające nazwom województwa nie są istotne statystycznie. 
+Interpretacja zmiennych:  
+Każdy dodatkowy kilometr obniża cenę o 0.1946 zł. Każdy dodatkowy rok zwiększa cenę średnio o 5,142 zł. Samochody z manualną skrzynią biegów są średnio tańsze o 27,550 zł. Jest dużo wartości odstających, co wymagałoby kolejne przetwarzania zmiennych: logarytmowania i różnicowania zmiennych. 
+
+```{r}
 # Wizualizacja regresji dla przebiegu
-ggplot(dane, aes(x = przebieg_w_km, y = cena_zl)) +
+regresja <- ggplot(dane, aes(x = przebieg_w_km, y = cena_zl)) +
   geom_point(alpha = 0.5) +
   geom_smooth(method = "lm", color = "blue") +
   labs(title = "Regresja: Cena a przebieg", x = "Przebieg (w milach)", y = "Cena (zł)") +
   theme_minimal()
+ggsave("regresja_cena_przebieg.png", plot = regresja, width = 8, height = 6, dpi = 300)
 ```
 
+![Regresja: Cena a przebieg](regresja_cena_przebieg.png)
+
+W celu określenia siły i kierunku zależności pomiędzy zmiennymi, przeprowadziliśmy test korelacji na przykładzie zmiennych cena oraz przebieg_w_km
+
+```{r}
+correlation <- cor.test(dane$cena_zl, dane$przebieg_w_km, use = "complete.obs")
+print(correlation)
+```
+
+Wskaźnik r= - 0.44 świadczy o ujemnej korelacji między ceną a przebiegiem. Oznacza to, że im większy przebieg, tym niższa cena, ale związek nie jest bardzo silny.
 
 
 
