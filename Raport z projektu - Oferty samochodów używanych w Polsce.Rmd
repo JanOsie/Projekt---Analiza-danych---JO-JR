@@ -528,7 +528,13 @@ print(correlation)
 
 Wskaźnik r= - 0.44 świadczy o ujemnej korelacji między ceną a przebiegiem. Oznacza to, że im większy przebieg, tym niższa cena, ale związek nie jest bardzo silny.
 
+Podsumowanie 
 
+  Przeprowadzona analiza opisowa pozwoliła na lepsze zrozumienie struktury danych oraz ich potencjalnego wykorzystania.
+    Analiza wykazała, że najwięcej ofert dotyczy marki Volkswagen, a najmniej – Lamborghini. Najczęściej występującym paliwem jest benzyna i diesel, podczas gdy pojazdy z napędem wodorowym prawie nie występują na portalu. Wykresy i tabele liczności pozwoliły także określić dominujące województwa i miasta pod względem liczby ofert.
+  Testy statystyczne wykazały istotne zależności między niektórymi zmiennymi.Przeprowadzona analiza korelacji ujawniła, że na cenę samochodu największy wpływ mają rok produkcji i przebieg, natomiast pojemność silnika ma relatywnie niewielkie znaczenie. Testy statystyczne, w tym test chi-kwadrat, potwierdziły istotne zależności między marką a województwem oraz rodzajem paliwa a typem skrzyni biegów.
+  Test proporcji wykazał znaczące różnice w rozkładzie liczby samochodów w różnych województwach, co sugeruje nierównomierne rozmieszczenie ofert sprzedaży w Polsce. Może to wynikać z różnic w poziomie urbanizacji i zamożności mieszkańców poszczególnych regionów. Analiza korelacji pokazała, że cena samochodu jest umiarkowanie skorelowana z rokiem produkcji i słabo z pojemnością silnika, natomiast wykazuje silną ujemną korelację z przebiegiem. Podsumowując, nowsze samochody są droższe, a większy przebieg obniża ich wartość, co jest zgodne z intuicyjnymi założeniami rynkowymi. Dodatkowo, bardzo słaba korelacja pojemności silnika z ceną może sugerować, że inne czynniki, takie jak marka czy wyposażenie, mają większy wpływ na wartość pojazdu.
+  Regresja liniowa potwierdziła istotność takich zmiennych jak rok produkcji, przebieg oraz rodzaj skrzyni biegów w kształtowaniu ceny pojazdu. Początkowy model wyjaśniał 37% wariancji cen, jednak po dodaniu marki i województwa jego skuteczność wzrosła do 51%. Wyniki te wskazują, że czynniki lokalizacyjne i preferencje marek również wpływają na wartość samochodu. Wnioski płynące z analizy mogą być przydatne zarówno dla sprzedających, jak i kupujących, umożliwiając lepsze przewidywanie wartości rynkowej pojazdów.
 
 
 
