@@ -3,13 +3,9 @@ title: "Raport z projektu - oferty samochodów używanych w Polsce"
 author: "Julia Rutkowska, Jan Osiecki, Daryna Pyatkevych"
 date: "2025-01-30"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
-
-# Raport z projektu - Oferty samochodów używanych w Polsce
-
-Julia Rutkowska, Jan Osiecki, Daryna Pyatkevych
 
 ## 0. O zbiorze danych
 
@@ -166,7 +162,7 @@ dane %>%
 vis_miss(dane[, c("rok", "cena_zl", "poj_silnika", "przebieg_w_km")], sort_miss = TRUE)
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("images/1.jpeg")
 ```
 
@@ -176,7 +172,7 @@ gg_miss_upset(dane[, c("rok", "cena_zl", "poj_silnika", "przebieg_w_km")],
               nsets = 4)
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("images/2.jpeg")
 ```
 
@@ -189,7 +185,7 @@ ggplot(data = dane, aes(x = rok, y = cena_zl)) +
   theme_minimal()
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("images/3.jpeg")
 ```
 
@@ -202,7 +198,7 @@ ggplot(data = dane, aes(x = rok, y = poj_silnika)) +
   theme_minimal()
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("images/4.jpeg")
 ```
 
@@ -215,7 +211,7 @@ ggplot(data = dane, aes(x = rok, y = przebieg_w_km)) +
   theme_minimal()
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("images/5.jpeg")
 ```
 
@@ -228,7 +224,7 @@ ggplot(data = dane, aes(x = poj_silnika, y = cena_zl)) +
   theme_minimal()
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("images/6.jpeg")
 ```
 
@@ -241,7 +237,7 @@ ggplot(data = dane, aes(x = cena_zl, y = przebieg_w_km)) +
   theme_minimal()
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("images/7.jpeg")
 ```
 
@@ -254,7 +250,7 @@ ggplot(data = dane, aes(x = poj_silnika, y = przebieg_w_km)) +
   theme_minimal()
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("images/8.jpeg")
 ```
 
@@ -263,7 +259,7 @@ knitr::include_graphics("images/8.jpeg")
 gg_miss_var(dane, facet = paliwo, show_pct = TRUE)
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("images/9.jpeg")
 ```
 
@@ -272,7 +268,7 @@ knitr::include_graphics("images/9.jpeg")
 gg_miss_fct(x = dane, fct = marka)
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("images/10.jpeg")
 ```
 
@@ -281,7 +277,7 @@ knitr::include_graphics("images/10.jpeg")
 gg_miss_fct(x = dane, fct = rok)
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("images/11.jpeg")
 ```
 
@@ -290,9 +286,13 @@ knitr::include_graphics("images/11.jpeg")
 gg_miss_case_cumsum(dane, breaks = 5000) + theme_bw()
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("images/12.jpeg")
 ```
+
+### Imputacje
+
+Dla wartości brakujących użyto imputacji KNN (K-Nearest Neighbors), czyli metody najbliższych sąsiadów bazującej na zbliżonych wartościach obserwacji. Użyto tej metody, ponieważ uwzględnia zależność miedzy cechami. Istnieje duże prawdopodobieństwo, że te same modele samochodów wyprodukowane w tych samych latach, będą miały zbliżony przebieg albo wielkość silnika czy rodzaj paliwa. W przeciwieństwi do imputacji średnią czy medianą, KNN dostosowuje się do struktury danych i nie spłaszcza zmienności. Ze względu na duże podobieństwo między danymi uznaliśmy tą metodę za najlepszą.
 
 ```{r, eval=FALSE}
 # imputacja metodą KNN - metoda K-najbliższych sąsiadów
@@ -380,35 +380,35 @@ for (nazwa in names(tabele)) {
 }
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("analiza/wykres_marka.png")
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("analiza/wykres_miasto.png")
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("analiza/wykres_model.png")
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("analiza/wykres_paliwo.png")
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("analiza/wykres_poj_silnika.png")
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("analiza/wykres_rok.png")
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("analiza/wykres_skrzynia_biegow.png")
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("analiza/wykres_wojewodztwo.png")
 ```
 
@@ -450,7 +450,7 @@ ggsave("wykres_top_model.png", plot = ploty_model[[1]], width = 8, height = 6)
 
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("analiza/wykres_top_model.png")
 ```
 
@@ -508,7 +508,7 @@ corrplot(cor_matrix, method = "circle", type = "lower", tl.col = "black", tl.srt
 dev.off()
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("analiza/wykres_korelacji.png")
 ```
 
@@ -547,7 +547,7 @@ dev.off()
 
 Statystyka testowa (X-squared) = 5174.1 jest bardzo wysoka. Wskazuje to na dużą różnicę między obserwowaną a oczekiwaną liczbą w tabeli kontyngencji, co sugeruje potencjalną zależność między zmiennymi. Stopnie swobody (df) = 1050 oznacza liczbę swobody, która zależy od liczby kategorii obu zmiennych. Wysoka liczba stopni swobody sugeruje, że jedna lub obie zmienne mają wiele kategorii. Wartość p (p-value):p\<2.2×10 −16, czyli wartość p jest znacznie mniejsza niż typowy poziom istotności. Oznacza to, że istnieje statystycznie istotna zależność między marką a województwem. A więc przyjmuje hipotezę o zależności wyboru marki od miejsca zamieszkania(województwo). Wygenerowaliśmy również przykładowy wykres mozaikowy do zależności rodzaju skrzyni biegów od rodzaju paliwa. Istnieje statystycznie istotna zależność między rodzajem paliwa a typem skrzyni biegów. Wynik testu sugeruje, że niektóre rodzaje paliwa są bardziej związane z konkretnymi typami skrzyń biegów. Skrzynie automatyczne są bardziej popularne w pojazdach z określonym rodzajem paliwa (np. elektryczne lub hybrydowe). Skrzynie manualne częściej występują w pojazdach z silnikami spalinowymi. Wynikiem testu chi-kwadrat dla zależności wyboru modelu samochodu są bardzo duże stopnie swobody, co oznacza zbyt wielką ilość kategorii
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("analiza/mozaikowy_paliwo_skrzynia.png")
 ```
 
@@ -569,7 +569,7 @@ ggsave("wykres_proporcje.png", plot = proporcje, width = 10, height = 6, dpi = 3
 
 Wyniki testu: Statystyka testowa 151,161 jest bardzo wysoka, co wskazuje na istotne różnice między obserwowaną a oczekiwaną liczbą samochodów w województwach. Stopnie swobody 25, co oznacza, że test uwzględnia rozkład samochodów w 26 województwach. Wartość p\<2.2×10 −16, co oznacza statystycznie istotne różnice w proporcjach. Rozkład samochodów w województwach nie jest równomierny. Województwa różnią się znacząco pod względem liczby samochodów. Różnice te mogą wynikać z gęstości zaludnienia, poziomu urbanizacji, dostępności określonych marek lub modeli.
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("analiza/wykres_proporcje.png")
 ```
 
@@ -604,7 +604,7 @@ regresja <- ggplot(dane, aes(x = przebieg_w_km, y = cena_zl)) +
 ggsave("regresja_cena_przebieg.png", plot = regresja, width = 8, height = 6, dpi = 300)
 ```
 
-```{r, echo=FALSE, out.width="50%"}
+```{r, echo=FALSE, out.width="100%"}
 knitr::include_graphics("analiza/regresja_cena_przebieg.png")
 ```
 
