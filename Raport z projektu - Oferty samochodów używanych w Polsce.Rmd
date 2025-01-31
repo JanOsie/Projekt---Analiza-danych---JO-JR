@@ -1,0 +1,622 @@
+---
+title: "Raport z projektu - oferty samochodów używanych w Polsce"
+author: "Julia Rutkowska, Jan Osiecki, Daryna Pyatkevych"
+date: "2025-01-30"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+## 0. O zbiorze danych
+
+Zbiór danych pozyskany z największego polskiego serwisu z ponad 90 tysięcami ofertami samochodów używanych i nowych otomoto.pl.
+
+-   **marka**: Marka lub producent samochodu, np. Volkswagen, Toyota, BMW, Ford itp.
+
+-   **model**: Model samochodu
+
+-   **cena**: Podana cena samochodu w polskich złotych (PLN), zapewniająca wgląd w trendy cenowe samochodów używanych w Polsce.
+
+-   **przebieg**: Zarejestrowany przebieg samochodu, reprezentujący całkowity dystans przejechany przez pojazd w kilometrach (km).
+
+-   **skrzynia biegów**: Typ skrzyni biegów używanej w samochodzie, oznaczony jako manualna lub automatyczna.
+
+-   **pojemność silnika**: Pojemność silnika lub pojemność skokowa samochodu, mierzona w centymetrach sześciennych (cm3), wskazująca rozmiar silnika.
+
+-   **paliwo**: Rodzaj paliwa używanego przez samochód, w tym opcje takie jak benzyna, olej napędowy, napęd hybrydowy, elektryczny itp.
+
+-   **miasto**: Miasto, w którym samochód jest zlokalizowany lub reklamowany na sprzedaż, oferując wgląd w regionalne różnice w dostępności używanych samochodów.
+
+-   **województwo**: Region administracyjny lub województwo, w którym znajduje się miasto, zapewniające bardziej szczegółowe odniesienie do lokalizacji.
+
+-   **rok**: Rok produkcji samochodu, reprezentujący jego wiek i umożliwiający czasową analizę rynku samochodów używanych.
+
+Analizując ten zbiór danych, naukowcy mogą badać różne aspekty polskiego rynku samochodów używanych, takie jak rozkład cen według marki i modelu, związek między przebiegiem a ceną, popularne rodzaje paliwa i ich dostępność w różnych regionach oraz wpływ wieku samochodu na ceny. Dodatkowo, ten zbiór danych może ułatwić opracowanie modeli predykcyjnych do szacowania wartości używanych samochodów na podstawie ich specyfikacji i historycznych trendów rynkowych.
+
+## 1. Data Wrangling
+
+Po zapoznaniu się z bazą danych przejrzeliśmy ręcznie poszczególne wiersze by zobaczyć strukturę danych. Poza brakującymi wartościami znaleźliśmy wiele wierszy, w których dane były wpisane w złych kolumnach. Zaczeliśmy pracę od uporządkowania tego.
+
+```{r, eval=FALSE}
+head(paliwo_blednie5)
+```
+
+```         
+# A tibble: 6 × 10
+  marka model cena_zl przebieg_w_km skrzynia_biegow poj_silnika paliwo miasto wojewodztwo   rok
+  <fct> <fct>   <int>         <int> <fct>                 <int> <fct>  <fct>  <fct>       <int>
+1 alfa… alfa…   14700        133760 manual                 1970 Benzy… Łask   Łódzkie      1998
+2 alfa… alfa…   14000        133760 manual                 1970 Benzy… Mława  Mazowieckie  1998
+3 alfa… alfa…    4500        227000 manual                 1970 Benzy… Chełm… Kujawsko-p…  1996
+4 alfa… alfa…   17100        227000 manual                 1970 Benzy… Jasło  Podkarpack…  1996
+5 alfa… alfa…    3900        239000 manual                 1995 Benzy… Pabia… Łódzkie      1995
+6 alfa… alfa…   17200        239000 manual                 1995 Benzy… Warsz… Mazowieckie  1995
+```
+
+### 1.1 Identyfikacja wartości błędnych (nie brakujących)
+
+```{r, eval=FALSE}
+head(paliwo_blednie5)
+```
+
+```         
+# A tibble: 6 × 10
+  marka model       cena_zl przebieg_w_milach skrzynia_biegow poj_silnika paliwo miasto wojewodztwo rok  
+  <chr> <chr>         <int> <chr>             <chr>           <chr>       <chr>  <chr>  <chr>       <chr>
+1 audi  Audi A4 40…  203000 5 km              automatic       Elektryczny 2023   Łódź   Łódzkie     2023 
+2 audi  Audi e-tron  341000 50 km             automatic       Elektryczny 2022   Wolica Mazowieckie 2022 
+3 audi  Audi A4 2.…  169000 1 984 cm3         automatic       Benzyna     2023   Kraków Małopolskie 2023 
+4 audi  Audi A4 Al…  174000 10 km             automatic       Elektryczny 2023   Kalisz Wielkopols… 2023 
+5 bmw   BMW Seria …   43900 94 000 km         automatic       Elektryczny 2014   Busko… Świętokrzy… 2014 
+6 bmw   BMW Seria …   81900 90 000 km         automatic       Elektryczny 2014   Grójec Mazowieckie 2014 
+```
+
+```{r, eval=FALSE}
+# czyszcenie w kolumnie poj_silnika
+for (i in 1:nrow(dane16)) {
+  # przenieść km do przebiegu, poźniej usunąć
+  if (grepl("km", dane16$poj_silnika[i]) & is.na(dane16$przebieg_w_milach[i])) {
+    dane16$przebieg_w_milach[i] <- dane16$poj_silnika[i]
+    dane16$poj_silnika[i] <- NA
+  } 
+  # przenieść rok do kol rok, później usunąć
+  if (dane16$poj_silnika[i] %in% rok_prawidłowe & is.na(dane16$rok[i])) {
+    dane16$rok[i] <- dane16$poj_silnika[i]
+    dane16$poj_silnika[i] <- NA
+  }
+  # jeśli rok już jest to usunąć rok gdy jest w kol poj_silnika
+  if (dane16$poj_silnika[i] %in% rok_prawidłowe & !is.na(dane16$rok[i])) {
+    dane16$poj_silnika[i] <- NA
+  }
+  # usuwanie nazw paliw z poj_silnika
+  if (dane16$poj_silnika[i] %in% paliwo_prawidlowe) {
+    # gdy nie ma wartości w kolumnie paliwo to ją wstaw z kolumy poj_silnika
+    if (is.na(dane16$paliwo[i])) {
+      dane16$paliwo[i] <- dane16$poj_silnika[i]
+      dane16$poj_silnika[i] <- NA
+    }
+    # gdy w kolumnie paliwo jest paliwo to usuń z kolumny poj_silnika
+    if (dane16$paliwo[i] %in% paliwo_prawidlowe) {
+      dane16$poj_silnika[i] <- NA
+    }
+  }
+}
+
+# sprawdam jeszcze raz czy coś poza cm3 jest w poj_silnika (pusta tabela)
+
+View(dane16[!grepl("cm3", dane16$poj_silnika) & !is.na(dane16$poj_silnika), ])
+```
+
+W wyniku "porządkowania" jak powyżej baza danych została z prawidłowymi wartościami bądź brakującymi.
+
+### Identyfikacja wartości brakujących
+
+```{r, eval=FALSE}
+# Łączna liczba brakujących wartości
+n_miss(dane)
+```
+
+```         
+[1] 5833
+```
+
+```{r, eval=FALSE}
+# Łączna liczba brakujących wartości z podziałem na kolumny
+miss_var_summary(dane)
+```
+
+```         
+# A tibble: 10 × 3
+   variable        n_miss pct_miss
+   <chr>            <int>    <num>
+ 1 rok               2730    2.98 
+ 2 cena_zl           1550    1.69 
+ 3 poj_silnika       1219    1.33 
+ 4 przebieg_w_km      334    0.365
+ 5 marka                0    0    
+ 6 model                0    0    
+ 7 skrzynia_biegow      0    0    
+ 8 paliwo               0    0    
+ 9 miasto               0    0    
+10 wojewodztwo          0    0  
+```
+
+```{r, eval=FALSE}
+# wiersze, w których brakuje dana liczba brakujących wartości
+dane %>% 
+  miss_case_table()
+```
+
+```         
+# A tibble: 4 × 3
+  n_miss_in_case n_cases pct_cases
+           <int>   <int>     <dbl>
+1              0   86206  94.2    
+2              1    4808   5.25   
+3              2     502   0.548  
+4              3       7   0.00765
+```
+
+```{r, eval=FALSE}
+# wykresy zmiennych w których brakuje wartości (malejąco)
+vis_miss(dane[, c("rok", "cena_zl", "poj_silnika", "przebieg_w_km")], sort_miss = TRUE)
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("images/1.jpeg")
+```
+
+```{r, eval=FALSE}
+# współwystępowanie NA między zmiennymi
+gg_miss_upset(dane[, c("rok", "cena_zl", "poj_silnika", "przebieg_w_km")], 
+              nsets = 4)
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("images/2.jpeg")
+```
+
+```{r, eval=FALSE}
+# zależność występowania NA miedzy zmiennymi dotyczących ceny a rokiem 
+ggplot(data = dane, aes(x = rok, y = cena_zl)) + 
+  geom_point() +
+  geom_miss_point() +
+  scale_color_manual(values = c("red","navyblue")) +
+  theme_minimal()
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("images/3.jpeg")
+```
+
+```{r, eval=FALSE}
+# zależność występowania NA miedzy zmiennymi dotyczących roku a pojemności silnika 
+ggplot(data = dane, aes(x = rok, y = poj_silnika)) + 
+  geom_point() +
+  geom_miss_point() +
+  scale_color_manual(values = c("orange","green3")) +
+  theme_minimal()
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("images/4.jpeg")
+```
+
+```{r, eval=FALSE}
+# zależność występowania NA miedzy zmiennymi dotyczących roku a przebiegiem 
+ggplot(data = dane, aes(x = rok, y = przebieg_w_km)) + 
+  geom_point() +
+  geom_miss_point() +
+  scale_color_manual(values = c("gold","steelblue1")) +
+  theme_minimal()
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("images/5.jpeg")
+```
+
+```{r, eval=FALSE}
+# zależność występowania NA miedzy zmiennymi dotyczących pojemności silnika a ceną 
+ggplot(data = dane, aes(x = poj_silnika, y = cena_zl)) + 
+  geom_point() +
+  geom_miss_point() +
+  scale_color_manual(values = c("lightslateblue","sienna1")) +
+  theme_minimal()
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("images/6.jpeg")
+```
+
+```{r, eval=FALSE}
+# zależność występowania NA miedzy zmiennymi dotyczących ceny a przebiegu 
+ggplot(data = dane, aes(x = cena_zl, y = przebieg_w_km)) + 
+  geom_point() +
+  geom_miss_point() +
+  scale_color_manual(values = c("magenta4","turquoise4")) +
+  theme_minimal()
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("images/7.jpeg")
+```
+
+```{r, eval=FALSE}
+# zależność występowania NA miedzy zmiennymi dotyczących pojemności silnika a przebiegiem 
+ggplot(data = dane, aes(x = poj_silnika, y = przebieg_w_km)) + 
+  geom_point() +
+  geom_miss_point() +
+  scale_color_manual(values = c("hotpink3","forestgreen")) +
+  theme_minimal()
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("images/8.jpeg")
+```
+
+```{r, eval=FALSE}
+# Procentowy udział brakujących wartości w podziale na typ paliwa
+gg_miss_var(dane, facet = paliwo, show_pct = TRUE)
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("images/9.jpeg")
+```
+
+```{r, eval=FALSE}
+# Heatmapa brakujących wartości z podziałem na markę
+gg_miss_fct(x = dane, fct = marka)
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("images/10.jpeg")
+```
+
+```{r, eval=FALSE}
+# Heatmapa brakujących wartości z podziałem na rok
+gg_miss_fct(x = dane, fct = rok)
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("images/11.jpeg")
+```
+
+```{r, eval=FALSE}
+# wykres skumulowana suma brakujących wartości
+gg_miss_case_cumsum(dane, breaks = 5000) + theme_bw()
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("images/12.jpeg")
+```
+
+### Imputacje
+
+Dla wartości brakujących użyto imputacji KNN (K-Nearest Neighbors), czyli metody najbliższych sąsiadów bazującej na zbliżonych wartościach obserwacji. Użyto tej metody, ponieważ uwzględnia zależność miedzy cechami. Istnieje duże prawdopodobieństwo, że te same modele samochodów wyprodukowane w tych samych latach, będą miały zbliżony przebieg albo wielkość silnika czy rodzaj paliwa. W przeciwieństwi do imputacji średnią czy medianą, KNN dostosowuje się do struktury danych i nie spłaszcza zmienności. Ze względu na duże podobieństwo między danymi uznaliśmy tą metodę za najlepszą.
+
+```{r, eval=FALSE}
+# imputacja metodą KNN - metoda K-najbliższych sąsiadów
+dane2 <- dane
+dane2_knn <- kNN(dane2)
+daneknn <- dane2_knn %>% select(where(~ !is.logical(.)))
+n_miss(daneknn)
+```
+
+### Analiza opisowa
+
+W celu lepszego zrozumienia danych oraz ich potencjalnego wykorzystania przeprowadziliśmy analizę opisową. Dla skutecznego wykorzystania danych, usunęliśmy zbędne spacje z nazw kolumn, zapisaliśmy niektóre kolumny jako wartości numeryczne oraz wybraliśmy biblioteki z których będziemy korzystać dla przeprowadzenia testów statystycznych oraz wizualizacji danych
+
+```{r, eval=FALSE}
+# Usunięcie zbędnych spacji z nazw kolumn
+colnames(dane) <- trimws(colnames(dane))
+
+# Konwersja odpowiednich kolumn na wartości numeryczne
+dane$poj_silnika <- as.numeric(gsub("[^0-9]", "", dane$poj_silnika))
+dane$przebieg_w_km <- as.numeric(gsub("[^0-9]", "", dane$przebieg_w_km))
+dane$rok <- as.numeric(dane$rok)
+
+# Ładowanie bibliotek
+library(dplyr)
+library(ggplot2)
+library(ggstatsplot)
+library(corrplot)
+library(knitr)
+```
+
+Pierwszym krokiem naszej analizie jest przedstawienie danych jako tabel liczności
+
+```{r, eval=FALSE}
+# 1. Tabele liczności dla każdej zmiennej
+tabele <- list(
+  marka = dane %>% count(marka, sort = TRUE),
+  model = dane %>% count(model, sort = TRUE),
+  wojewodztwo = dane %>% count(wojewodztwo, sort = TRUE),
+  rok = dane %>% count(rok, sort = TRUE),
+  paliwo = dane %>% count(paliwo, sort = TRUE),
+  skrzynia_biegow = dane %>% count(skrzynia_biegow, sort = TRUE),
+  poj_silnika = dane %>% count(poj_silnika, sort = TRUE),
+  miasto =  dane %>% count(miasto, sort = TRUE)
+)
+
+# Wyświetlenie tabel liczności
+tabele_md <- lapply(tabele, function(tbl) {
+  kable(tbl, format = "markdown", col.names = c("Kategoria", "Liczba"))
+})
+
+# Wyświetlenie tabel
+names(tabele_md) <- c("Marka", "Model", "Województwo", "Rok", "Paliwo", "Skrzynia biegów", "Pojemność silnika", "Miasto")
+
+for (nazwa in names(tabele_md)) {
+  cat(paste0("\n## ", nazwa, "\n\n")) 
+  cat(tabele_md[[nazwa]], "\n\n")   
+}
+```
+
+Na podstawie tabeli liczności, możemy zobaczyć między innymi ilość transakcji w każdym mieście lub województwie, ile zostało przeprowadzonych transakcji z samochodami o danych charakterystykach.
+
+```{r, eval=FALSE}
+
+tabele <- lapply(tabele, function(tbl) {
+  colnames(tbl) <- c("Kategoria", "n")
+  tbl
+})
+
+for (nazwa in names(tabele)) {
+  tabela <- tabele[[nazwa]]
+  
+  # Tworzenie wykresu
+  p <- ggplot(tabela, aes(x = reorder(Kategoria, n), y = n)) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    coord_flip() +
+    labs(
+      title = paste("Liczba samochodów wg", nazwa),
+      x = nazwa,
+      y = "Liczba"
+    ) +
+    theme_minimal()
+  
+  # Zapis wykresu
+  ggsave(paste0("wykres_", nazwa, ".png"), plot = p, width = 8, height = 6)
+}
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("analiza/wykres_marka.png")
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("analiza/wykres_miasto.png")
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("analiza/wykres_model.png")
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("analiza/wykres_paliwo.png")
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("analiza/wykres_poj_silnika.png")
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("analiza/wykres_rok.png")
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("analiza/wykres_skrzynia_biegow.png")
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("analiza/wykres_wojewodztwo.png")
+```
+
+Z wykresów możemy wywnioskować, że najwięcej ofert na portalu jest dla marki Volkswagen, a najmniej Lamborghini. Najczęstszymi rodzajami paliwa są paliwo oraz diesel, natomiast ofert z wodorowym napędem na portalu nie ma. Najwięcej samochodów zamieszczonych na portalu są 2018 roku produkcji, natomiast najrzadziej 1995.Więcej ofert jest dla samochodów z manualną skrzynią biegów niż automatyczną.Mazowieckie województwo jest liderem pod względem dostępnych ofert.
+
+Ze względu na bardzo dużą liczbę danych dla zmiennyc: model, miasto, poj_silnika wygenerowane wykresy są nieczytelne, więc dla nich musimy zastosować inne metody generowania wykresów.
+
+Dla wykresu dla zmiennej model wygenerujemy 10 najczęściej wybieranych modeli i dla nich wygenerujemy wykres.
+
+```{r, eval=FALSE}
+
+# Funkcja do tworzenia wykresów top i bottom 10
+wykres_top_bottom <- function(dane, nazwa) {
+  top_10 <- dane %>% top_n(10, n)
+  bottom_10 <- dane %>% top_n(-10, n)
+  
+  p1 <- ggplot(top_10, aes(x = reorder(Kategoria, n), y = n)) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    coord_flip() +
+    labs(title = paste("Top 10", nazwa), x = nazwa, y = "Liczba") +
+    theme_minimal()
+  
+  p2 <- ggplot(bottom_10, aes(x = reorder(Kategoria, n), y = n)) +
+    geom_bar(stat = "identity", fill = "red") +
+    coord_flip() +
+    labs(title = paste("Bottom 10", nazwa), x = nazwa, y = "Liczba") +
+    theme_minimal()
+  
+  return(list(p1, p2))
+}
+
+# Wczytanie danych
+tabele <- lapply(tabele, function(tbl) {
+  colnames(tbl) <- c("Kategoria", "n")
+  tbl
+})
+wykres_model <- wykres_top_bottom(tabele[["model"]], "Model")
+ggsave("wykres_top_model.png", plot = ploty_model[[1]], width = 8, height = 6)
+
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("analiza/wykres_top_model.png")
+```
+
+Opel astra jest najczęściej sprzedawanym modelem.
+
+Dla lepszego zrozumienia danych sprawdziliśmy podstawowe statystyki dla zmiennych numerycznych.
+
+```{r, eval=FALSE}
+# 3. Statystyki opisowe
+statystyki_opisowe <- dane %>%
+  summarise(
+    MinCena = min(cena_zl, na.rm = TRUE),
+    SredniaCena = mean(cena_zl, na.rm = TRUE),
+    MedianaCena = median(cena_zl, na.rm = TRUE),
+    MaxCena = max(cena_zl, na.rm = TRUE),
+    OdchylenieCena = sd(cena_zl, na.rm = TRUE),
+    IQR_Cena = IQR(cena_zl, na.rm = TRUE),
+    MinPrzebieg = min(przebieg_w_km, na.rm = TRUE),
+    SredniPrzebieg = mean(przebieg_w_km, na.rm = TRUE),
+    MaxPrzebieg = max(przebieg_w_km, na.rm = TRUE),
+    MinRok = min(rok, na.rm = TRUE),
+    MaxRok = max(rok, na.rm = TRUE)
+  )
+print(statystyki_opisowe)
+
+# 4. Wyświetlenie raportu i wykresu dla statystyk opisowych
+statystyki_opisowe <- data.frame(
+  Statystyka = names(statystyki_opisowe),
+  Wartość = unlist(statystyki_opisowe)
+)
+p_statystyki <- ggplot(statystyki_opisowe, aes(x = Statystyka, y = Wartość)) +
+  geom_col(fill = "blue") +
+  labs(
+    title = "Podstawowe statystyki opisowe",
+    x = "Statystyka",
+    y = "Wartość"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ggsave("statystyki_opisowe.png", plot = p_statystyki, width = 8, height = 6)
+
+
+```
+
+Najniższa cena na portalu o 1111 zł, średnia cena za samochód to 84146,29 zł, mediana natiomiast plasuje się na poziomie 49900.
+
+W celu zbadania zależności pomiędzy zmiennymi zależnymi tworzymy macierz korrelacji oraz odpowiedni wykres
+
+```{r, eval=FALSE}
+num_cols <- dane %>% select(where(is.numeric)) # Wybierz kolumny numeryczne
+cor_matrix <- cor(num_cols, use = "complete.obs")
+print(cor_matrix)
+png("wykres_korelacji.png", width = 800, height = 800) # Utwórz plik PNG
+corrplot(cor_matrix, method = "circle", type = "lower", tl.col = "black", tl.srt = 45)
+dev.off()
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("analiza/wykres_korelacji.png")
+```
+
+Cena wykazuje umiarkowaną korrelację z rokiem produkcji (r=0,47), co sugeruje, że nowsze samochody są droższe. Natomiast niską korrelację z pojemnością silnika oraz ujemną korelację z przebiegiem, co oznacza, że każdy dodatkowy kilometr obniża cenę samochodu. Przebieg ma silną korrelację z rokiem produkcji, co jest dosyć oczywistym stwierdzeniem, że starsze samochody mają większy przebieg. Pojemność silnika wykazuje bardzo słabe korelacje z innymi zmiennymi. Rok produkcji jest silnie skorelowany z ceną i bardzo silnie ujemnie z przebiegiem, co podkreśla znaczenie wieku samochodu w kontekście jego wartości i użytkowania. Najistotniejsze czynniki wpływające na cenę samochodu to rok produkcji i przebieg, co zgadza się z intuicyjnym podejściem do wyceny pojazdów. Pojemność silnika ma stosunkowo niewielki wpływ na cenę, a jej korelacje z innymi zmiennymi są słabe.
+
+Testy statystyczne Kolejną częścią raportu jest przeprowadzenie przykładowych testów statystycznych
+
+W celu przedstawienia współzależności pomiędzy dwiema zmiennymi kategorycznymi w postaci tabeli oraz sprawdzenia istnienia takowej współzależności stworzyliśmy tabele kontyngencji oraz przeprowadziliśmy test chi-kwadrat. Sprawdziliśmy czy wybór marki zależy od województwa, typ skrzyni biegu zależy od rodzaju paliwa, czy wybór modelu zależy od miasta.
+
+# 6. Testy statystyczne
+
+# Tabela kontyngencji i test chi-kwadrat
+
+```{r, eval=FALSE}
+tabela_marka_wojewodztwo <- table(dane$marka, dane$wojewodztwo)
+print(tabela_marka_wojewodztwo)
+chi_sq_result <- chisq.test(tabela_marka_wojewodztwo)
+print(chi_sq_result)
+tabela_paliwo_skrzynia <- table(dane$paliwo, dane$skrzynia_biegow)
+print(tabela_paliwo_skrzynia)
+chi_sq_result1 <- chisq.test(tabela_paliwo_skrzynia )
+print(chi_sq_result1)
+tabela_model_miasto <- table(dane$model, dane$miasto)
+print(tabela_model_miasto)
+chi_sq_result2 <- chisq.test(tabela_model_miasto )
+print(chi_sq_result2)
+png("mozaikowy_paliwo_skrzynia.png", width = 800, height = 600)
+mosaicplot(tabela_paliwo_skrzynia, 
+           main = "Relacja między rodzajem paliwa a skrzynią biegów", 
+           color = TRUE, 
+           shade = TRUE, 
+           las = 1, 
+           cex.axis = 0.9) 
+dev.off()
+```
+
+Statystyka testowa (X-squared) = 5174.1 jest bardzo wysoka. Wskazuje to na dużą różnicę między obserwowaną a oczekiwaną liczbą w tabeli kontyngencji, co sugeruje potencjalną zależność między zmiennymi. Stopnie swobody (df) = 1050 oznacza liczbę swobody, która zależy od liczby kategorii obu zmiennych. Wysoka liczba stopni swobody sugeruje, że jedna lub obie zmienne mają wiele kategorii. Wartość p (p-value):p\<2.2×10 −16, czyli wartość p jest znacznie mniejsza niż typowy poziom istotności. Oznacza to, że istnieje statystycznie istotna zależność między marką a województwem. A więc przyjmuje hipotezę o zależności wyboru marki od miejsca zamieszkania(województwo). Wygenerowaliśmy również przykładowy wykres mozaikowy do zależności rodzaju skrzyni biegów od rodzaju paliwa. Istnieje statystycznie istotna zależność między rodzajem paliwa a typem skrzyni biegów. Wynik testu sugeruje, że niektóre rodzaje paliwa są bardziej związane z konkretnymi typami skrzyń biegów. Skrzynie automatyczne są bardziej popularne w pojazdach z określonym rodzajem paliwa (np. elektryczne lub hybrydowe). Skrzynie manualne częściej występują w pojazdach z silnikami spalinowymi. Wynikiem testu chi-kwadrat dla zależności wyboru modelu samochodu są bardzo duże stopnie swobody, co oznacza zbyt wielką ilość kategorii
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("analiza/mozaikowy_paliwo_skrzynia.png")
+```
+
+Kolejnym testem jest test proporcji, żeby sprawdzić rozłożenie róznych zmiennych. Sprawdzimy różnice pod względem liczby samochodów w różnych wojewóztwach
+
+```{r, eval=FALSE}
+# Testowanie proporcji
+prop_table <- prop.table(table(dane$wojewodztwo))
+test_proporcji <- chisq.test(table(dane$wojewodztwo))
+print(test_proporcji)
+
+# Wizualizacja proporcji
+proporcje <- ggplot(as.data.frame(prop_table), aes(x = Var1, y = Freq)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Proporcje samochodów w województwach", x = "Województwo", y = "Proporcja") +
+  theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ggsave("wykres_proporcje.png", plot = proporcje, width = 10, height = 6, dpi = 300)
+```
+
+Wyniki testu: Statystyka testowa 151,161 jest bardzo wysoka, co wskazuje na istotne różnice między obserwowaną a oczekiwaną liczbą samochodów w województwach. Stopnie swobody 25, co oznacza, że test uwzględnia rozkład samochodów w 26 województwach. Wartość p\<2.2×10 −16, co oznacza statystycznie istotne różnice w proporcjach. Rozkład samochodów w województwach nie jest równomierny. Województwa różnią się znacząco pod względem liczby samochodów. Różnice te mogą wynikać z gęstości zaludnienia, poziomu urbanizacji, dostępności określonych marek lub modeli.
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("analiza/wykres_proporcje.png")
+```
+
+Następnie oszacowaliśmy model regresji, żeby zbadać jak przebieg, pojemność silnika, rok, skrzynia biegów i rodzaj paliwa wpływają na wartość samochodu oraz identyfikować istotne czynniki determinujące cenę.
+
+```{r, eval=FALSE}
+# 7. Regresja liniowa i korelacja
+# Regresja liniowa: Cena jako funkcja przebiegu, pojemności silnika i roku produkcji
+model <- lm(cena_zl ~ przebieg_w_km + poj_silnika + rok + skrzynia_biegow
+            + paliwo, data = dane)
+summary(model)
+```
+
+Model nie jest najlepiej dopasowanym modelem, o czym świadczy statystyka R2, która wynosi 0,3767. Model wyjaśnia tylko 37% wariancji ceny. Analizując opracowany model regresji, możemy stwierdzić, że większość zmiennych są istotne statystycznie na poziomie istotności 0,05. Żeby lepiej wyjaśnić model, do modelu regresji dodamy zmienną marka oraz wojewodztwo.
+
+```{r, eval=FALSE}
+model <- lm(cena_zl ~ przebieg_w_km + poj_silnika + rok + skrzynia_biegow
+            + paliwo + marka + wojewodztwo, data = dane)
+summary(model)
+```
+
+Powyższy model lepiej wyjaśnia zmiany cen, statystyka R2 = 0,5111. W tym modelu zmienne odpowiadające nazwom województwa nie są istotne statystycznie. Interpretacja zmiennych:\
+Każdy dodatkowy kilometr obniża cenę o 0.1946 zł. Każdy dodatkowy rok zwiększa cenę średnio o 5,142 zł. Samochody z manualną skrzynią biegów są średnio tańsze o 27,550 zł. Jest dużo wartości odstających, co wymagałoby kolejne przetwarzania zmiennych: logarytmowania i różnicowania zmiennych.
+
+```{r, eval=FALSE}
+# Wizualizacja regresji dla przebiegu
+regresja <- ggplot(dane, aes(x = przebieg_w_km, y = cena_zl)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", color = "blue") +
+  labs(title = "Regresja: Cena a przebieg", x = "Przebieg (w milach)", y = "Cena (zł)") +
+  theme_minimal()
+ggsave("regresja_cena_przebieg.png", plot = regresja, width = 8, height = 6, dpi = 300)
+```
+
+```{r, echo=FALSE, out.width="100%"}
+knitr::include_graphics("analiza/regresja_cena_przebieg.png")
+```
+
+W celu określenia siły i kierunku zależności pomiędzy zmiennymi, przeprowadziliśmy test korelacji na przykładzie zmiennych cena oraz przebieg_w_km
+
+```{r, eval=FALSE}
+correlation <- cor.test(dane$cena_zl, dane$przebieg_w_km, use = "complete.obs")
+print(correlation)
+```
+
+Wskaźnik r= - 0.44 świadczy o ujemnej korelacji między ceną a przebiegiem. Oznacza to, że im większy przebieg, tym niższa cena, ale związek nie jest bardzo silny.
+
+## Podsumowanie
+
+Przeprowadzona analiza opisowa pozwoliła na lepsze zrozumienie struktury danych oraz ich potencjalnego wykorzystania. Analiza wykazała, że najwięcej ofert dotyczy marki Volkswagen, a najmniej – Lamborghini. Najczęściej występującym paliwem jest benzyna i diesel, podczas gdy pojazdy z napędem wodorowym prawie nie występują na portalu. Wykresy i tabele liczności pozwoliły także określić dominujące województwa i miasta pod względem liczby ofert. Testy statystyczne wykazały istotne zależności między niektórymi zmiennymi.Przeprowadzona analiza korelacji ujawniła, że na cenę samochodu największy wpływ mają rok produkcji i przebieg, natomiast pojemność silnika ma relatywnie niewielkie znaczenie. Testy statystyczne, w tym test chi-kwadrat, potwierdziły istotne zależności między marką a województwem oraz rodzajem paliwa a typem skrzyni biegów. Test proporcji wykazał znaczące różnice w rozkładzie liczby samochodów w różnych województwach, co sugeruje nierównomierne rozmieszczenie ofert sprzedaży w Polsce. Może to wynikać z różnic w poziomie urbanizacji i zamożności mieszkańców poszczególnych regionów. Analiza korelacji pokazała, że cena samochodu jest umiarkowanie skorelowana z rokiem produkcji i słabo z pojemnością silnika, natomiast wykazuje silną ujemną korelację z przebiegiem. Podsumowując, nowsze samochody są droższe, a większy przebieg obniża ich wartość, co jest zgodne z intuicyjnymi założeniami rynkowymi. Dodatkowo, bardzo słaba korelacja pojemności silnika z ceną może sugerować, że inne czynniki, takie jak marka czy wyposażenie, mają większy wpływ na wartość pojazdu. Regresja liniowa potwierdziła istotność takich zmiennych jak rok produkcji, przebieg oraz rodzaj skrzyni biegów w kształtowaniu ceny pojazdu. Początkowy model wyjaśniał 37% wariancji cen, jednak po dodaniu marki i województwa jego skuteczność wzrosła do 51%. Wyniki te wskazują, że czynniki lokalizacyjne i preferencje marek również wpływają na wartość samochodu. Wnioski płynące z analizy mogą być przydatne zarówno dla sprzedających, jak i kupujących, umożliwiając lepsze przewidywanie wartości rynkowej pojazdów.

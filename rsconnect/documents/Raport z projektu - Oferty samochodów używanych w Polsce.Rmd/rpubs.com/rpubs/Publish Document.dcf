@@ -1,0 +1,10 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/1267185/0dfcb45a8ff84dde8b5b3d5639554297
+bundleId: https://api.rpubs.com/api/v1/document/1267185/0dfcb45a8ff84dde8b5b3d5639554297
+url: http://rpubs.com/JanOsi/1267185
+version: 1
